@@ -36,9 +36,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex flex-col gap-12 min-h-screen items-center">
+    <div className="flex flex-col gap-12 min-h-screen items-center p-4 pt-16">
       <div>
-        <img className="h-50 w-auto" src={Logo} alt="Narmada Spices Logo" />
+        <img className="h-20 w-auto" src={Logo} alt="Narmada Spices Logo" />
       </div>
       <div className="text-center">
         <h1 className="text-4xl font-bold">Login</h1>
