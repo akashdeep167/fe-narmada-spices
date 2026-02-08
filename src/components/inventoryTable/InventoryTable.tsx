@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  RotateCw,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -45,6 +46,8 @@ export function InventoryTable() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [selectedRow, setSelectedRow] = useState<Inventory | null>(null);
   const [open, setOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const table = useReactTable({
     data: mockData,
     columns: tableColumns,
@@ -70,6 +73,22 @@ export function InventoryTable() {
     },
   });
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+
+    // Reset all states
+    setSorting([]);
+    setColumnFilters([]);
+    setGlobalFilter("");
+    setRowSelection({});
+    table.setPageIndex(0);
+
+    // Mock API delay (2 sec)
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 2000);
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -80,12 +99,26 @@ export function InventoryTable() {
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="border px-3 py-2 rounded w-64"
           />
-          <Button
-            variant="ghost"
-            onClick={() => setShowFilter((state) => !state)}
-          >
-            <Funnel />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RotateCw
+                className={`h-4 w-4 transition-all duration-300 ${
+                  isRefreshing ? "animate-spin text-primary" : ""
+                }`}
+              />
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowFilter((state) => !state)}
+            >
+              <Funnel />
+            </Button>
+          </div>
         </div>
         <Table>
           <TableHeader className="bg-[#E8DCC8] dark:bg-[#3A3126]">
