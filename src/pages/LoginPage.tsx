@@ -40,11 +40,6 @@ const LoginPage = () => {
   const handleLogin = (data: LoginFormData) => {
     console.log("Login Data:", data);
   };
-  const toggleLanguage = () => {
-    const newLang = i18n.language === "en" ? "hi" : "en";
-    i18n.changeLanguage(newLang);
-    localStorage.setItem("lng", newLang);
-  };
 
   return (
     <div className="flex flex-col gap-12 min-h-screen items-center p-4 pt-16">
@@ -112,9 +107,6 @@ const LoginPage = () => {
           </form>
         </Form>
       </div>
-      <Button variant="outline" onClick={toggleLanguage}>
-        {i18n.language === "en" ? "हिंदी" : "English"}
-      </Button>
     </div>
   );
 };
