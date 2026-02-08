@@ -72,7 +72,6 @@ export function InventoryTable() {
 
   return (
     <>
-      {" "}
       <div className="rounded-md border">
         <div className="p-4 flex justify-between">
           <Input
