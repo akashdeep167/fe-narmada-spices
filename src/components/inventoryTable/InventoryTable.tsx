@@ -75,7 +75,7 @@ export function InventoryTable() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-
+    setShowFilter(false);
     // Reset all states
     setSorting([]);
     setColumnFilters([]);
@@ -115,6 +115,7 @@ export function InventoryTable() {
             <Button
               variant="outline"
               onClick={() => setShowFilter((state) => !state)}
+              disabled={isRefreshing}
             >
               <Funnel />
             </Button>
