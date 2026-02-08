@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "hi" : "en";
     i18n.changeLanguage(newLang);

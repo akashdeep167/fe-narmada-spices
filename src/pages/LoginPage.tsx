@@ -27,7 +27,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
