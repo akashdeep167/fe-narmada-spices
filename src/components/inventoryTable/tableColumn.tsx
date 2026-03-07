@@ -1,23 +1,72 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Inventory } from "./mockData";
-import { Eye } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { useUpdatePurchaseSlip } from "@/hooks/useUpdatePurchaseSlip";
+import type { Inventory } from "./InventoryTable";
 
 export const tableColumns: ColumnDef<Inventory>[] = [
   {
-    id: "actions",
-    enableSorting: false,
-    // header: () => (
-    //   <div className="flex justify-center items-center">
-    //     <Eye size={18} />
-    //   </div>
-    // ),
-    cell: () => (
-      <div className="flex items-center justify-center">
-        <Eye size={18} className="cursor-pointer" />
-      </div>
-    ),
-    size: 60,
+    accessorKey: "status",
+    header: "स्थिति",
+    size: 110,
+
+    cell: ({ row }) => {
+      const { mutate, isPending } = useUpdatePurchaseSlip();
+
+      const status = row.original.status;
+
+      const statusColors: Record<string, string> = {
+        PENDING: "bg-yellow-100 text-yellow-800 border-yellow-300",
+        CONFIRMED: "bg-blue-100 text-blue-800 border-blue-300",
+        PAYMENT_PENDING: "bg-orange-100 text-orange-800 border-orange-300",
+        PAYMENT_DONE: "bg-green-100 text-green-800 border-green-300",
+      };
+
+      const statuses = [
+        "PENDING",
+        "CONFIRMED",
+        "PAYMENT_PENDING",
+        "PAYMENT_DONE",
+      ];
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border cursor-pointer hover:opacity-90 transition ${statusColors[status]}`}
+            >
+              {status.replace("_", " ")}
+              <ChevronDown size={12} />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="start">
+            {statuses.map((s) => (
+              <DropdownMenuItem
+                key={s}
+                disabled={isPending || s === status}
+                onClick={() =>
+                  mutate({
+                    id: row.original.id,
+                    data: { status: s },
+                  })
+                }
+              >
+                {s.replace("_", " ")}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
+
   {
     accessorKey: "id",
     header: "क्रमांक",
@@ -27,6 +76,15 @@ export const tableColumns: ColumnDef<Inventory>[] = [
     accessorKey: "date",
     header: "दिनांक",
     size: 120,
+    cell: ({ row }) => {
+      const date = new Date(row.original.date);
+
+      return new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+    },
   },
   {
     accessorKey: "farmer",
@@ -34,7 +92,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
     size: 160,
   },
   {
-    accessorKey: "village",
+    accessorKey: "location",
     header: "गांव / पार्टी का नाम",
     size: 200,
   },

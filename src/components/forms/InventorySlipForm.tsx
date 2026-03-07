@@ -16,17 +16,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Plus } from "lucide-react";
 
-type FormValues = {
+export type FormValues = {
   slipNo: string;
   date: string;
   farmer: string;
   location: string;
   mobile: string;
   item: string;
+  type: string;
   grade: string;
   rate: number;
   weights: { value: number }[];
 };
+
+type Props = {
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => void;
+  isSubmitting?: boolean;
+};
+
+const ITEM_OPTIONS = {
+  mahii: {
+    label: "Mahii",
+    types: ["WS", "DC"],
+  },
+  seedVariety: {
+    label: "Seed Variety",
+    types: ["WS", "DC"],
+  },
+};
+
+const GRADES = ["A", "B", "C", "D"];
 
 function generateSlipNumber() {
   const today = new Date();
@@ -38,24 +58,36 @@ function generateSlipNumber() {
   return `NS-${datePart}-${String(lastNumber).padStart(3, "0")}`;
 }
 
-export default function ModernInventorySlipForm() {
+export default function ModernInventorySlipForm({
+  defaultValues,
+  onSubmit,
+  isSubmitting,
+}: Props) {
   const form = useForm<FormValues>({
-    defaultValues: {
-      slipNo: "",
-      date: new Date().toISOString().split("T")[0],
-      farmer: "",
-      location: "",
-      mobile: "",
-      item: "",
-      grade: "",
-      rate: 0,
-      weights: [{ value: 0 }],
-    },
+    defaultValues: defaultValues
+      ? {
+          ...defaultValues,
+          date: defaultValues.date.split("T")[0],
+        }
+      : {
+          slipNo: "",
+          date: new Date().toISOString().split("T")[0],
+          farmer: "",
+          location: "",
+          mobile: "",
+          item: "",
+          type: "",
+          grade: "",
+          rate: 0,
+          weights: [{ value: 0 }],
+        },
   });
 
   useEffect(() => {
-    form.setValue("slipNo", generateSlipNumber());
-  }, []);
+    if (!defaultValues) {
+      form.setValue("slipNo", generateSlipNumber());
+    }
+  }, [defaultValues]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -72,6 +104,11 @@ export default function ModernInventorySlipForm() {
     name: "rate",
   });
 
+  const selectedItem = useWatch({
+    control: form.control,
+    name: "item",
+  });
+
   const totalWeight = useMemo(() => {
     return weights?.reduce((sum, w) => sum + (Number(w.value) || 0), 0);
   }, [weights]);
@@ -80,30 +117,31 @@ export default function ModernInventorySlipForm() {
     return totalWeight * (Number(rate) || 0);
   }, [totalWeight, rate]);
 
-  function onSubmit(values: FormValues) {
-    console.log(values);
+  function handleSubmit(values: FormValues) {
+    onSubmit(values);
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* HEADER */}
           <div className="flex justify-between items-center bg-primary/5 dark:bg-primary/10 p-4 rounded-lg">
             <h2 className="text-lg font-semibold text-primary">
               स्लिप #{form.watch("slipNo")}
             </h2>
+
             <span className="text-sm text-muted-foreground">
               {form.watch("date")}
             </span>
           </div>
 
-          {/* GRID LAYOUT */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* LEFT COLUMN */}
-            <div className="space-y-6">
+          {/* GRID */}
+          <div className="grid grid-cols-1 gap-2">
+            {/* LEFT */}
+            <div className="space-y-4">
               {/* Farmer Info */}
-              <Card className="bg-card/60 backdrop-blur">
+              <Card>
                 <CardContent className="space-y-4 p-5">
                   <FormField
                     control={form.control}
@@ -112,7 +150,7 @@ export default function ModernInventorySlipForm() {
                       <FormItem>
                         <FormLabel>नाम</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Farmer Name" />
+                          <Input {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -125,7 +163,7 @@ export default function ModernInventorySlipForm() {
                       <FormItem>
                         <FormLabel>स्थान</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Location" />
+                          <Input {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -136,7 +174,7 @@ export default function ModernInventorySlipForm() {
                     name="mobile"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>मोबाइल नं.</FormLabel>
+                        <FormLabel>मोबाइल</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -146,8 +184,8 @@ export default function ModernInventorySlipForm() {
                 </CardContent>
               </Card>
 
-              {/* Item Details */}
-              <Card className="bg-secondary/30 dark:bg-secondary/20">
+              {/* Item */}
+              <Card>
                 <CardContent className="space-y-4 p-5">
                   <FormField
                     control={form.control}
@@ -156,13 +194,52 @@ export default function ModernInventorySlipForm() {
                       <FormItem>
                         <FormLabel>वस्तु</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Chilli" />
+                          <select
+                            {...field}
+                            className="w-full border rounded-md h-10 px-3"
+                          >
+                            <option value="">Select</option>
+                            {Object.entries(ITEM_OPTIONS).map(([k, v]) => (
+                              <option key={k} value={k}>
+                                {v.label}
+                              </option>
+                            ))}
+                          </select>
                         </FormControl>
                       </FormItem>
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* Type */}
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type</FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              className="w-full border rounded-md h-10 px-3"
+                            >
+                              <option value="">Select</option>
+
+                              {selectedItem &&
+                                ITEM_OPTIONS[
+                                  selectedItem as keyof typeof ITEM_OPTIONS
+                                ]?.types.map((t) => (
+                                  <option key={t} value={t}>
+                                    {t}
+                                  </option>
+                                ))}
+                            </select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Grade */}
                     <FormField
                       control={form.control}
                       name="grade"
@@ -170,18 +247,27 @@ export default function ModernInventorySlipForm() {
                         <FormItem>
                           <FormLabel>ग्रेड</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <select
+                              {...field}
+                              className="w-full border rounded-md h-10 px-3"
+                            >
+                              <option value="">Select</option>
+                              {GRADES.map((g) => (
+                                <option key={g}>{g}</option>
+                              ))}
+                            </select>
                           </FormControl>
                         </FormItem>
                       )}
                     />
 
+                    {/* Rate */}
                     <FormField
                       control={form.control}
                       name="rate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>दर (₹/kg)</FormLabel>
+                          <FormLabel>दर</FormLabel>
                           <FormControl>
                             <Input type="number" {...field} />
                           </FormControl>
@@ -193,17 +279,15 @@ export default function ModernInventorySlipForm() {
               </Card>
             </div>
 
-            {/* RIGHT COLUMN */}
-            <div className="space-y-6">
+            {/* RIGHT */}
+            <div className="space-y-4">
               {/* Weights */}
               <Card>
                 <CardContent className="space-y-4 p-5">
-                  <h3 className="font-semibold">वजन</h3>
-
                   {fields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="flex items-center justify-between bg-muted/40 dark:bg-muted/20 p-3 rounded-md"
+                      className="flex items-center justify-between bg-muted p-3 rounded"
                     >
                       <span>{index + 1}</span>
 
@@ -213,19 +297,16 @@ export default function ModernInventorySlipForm() {
                         render={({ field }) => (
                           <Input
                             type="number"
-                            step="0.1"
                             {...field}
                             className="w-24 text-right"
                           />
                         )}
                       />
 
-                      <span>kg</span>
-
                       <Trash2
                         size={16}
-                        className="cursor-pointer text-muted-foreground"
                         onClick={() => remove(index)}
+                        className="cursor-pointer"
                       />
                     </div>
                   ))}
@@ -241,18 +322,16 @@ export default function ModernInventorySlipForm() {
                 </CardContent>
               </Card>
 
-              {/* Summary */}
-              <Card className="bg-primary/5 dark:bg-primary/10">
-                <CardContent className="p-5 space-y-3">
+              {/* SUMMARY */}
+              <Card>
+                <CardContent className="p-5 space-y-2">
                   <div className="flex justify-between">
-                    <span>कुल वजन</span>
-                    <span className="font-medium">
-                      {totalWeight.toFixed(2)} kg
-                    </span>
+                    <span>Total Weight</span>
+                    <span>{totalWeight.toFixed(2)} kg</span>
                   </div>
 
-                  <div className="flex justify-between text-lg font-semibold text-primary">
-                    <span>कुल राशि</span>
+                  <div className="flex justify-between font-semibold">
+                    <span>Total Amount</span>
                     <span>₹{totalAmount.toLocaleString()}</span>
                   </div>
                 </CardContent>
@@ -260,21 +339,10 @@ export default function ModernInventorySlipForm() {
             </div>
           </div>
 
-          <Button
-            variant="secondary"
-            className="w-full h-12 font-semibold bg-[#E8DCC8] dark:bg-[#3A3126]"
-          >
-            स्लिप सहेजें
+          {/* SUBMIT */}
+          <Button type="submit" disabled={isSubmitting} className="w-full h-12">
+            {isSubmitting ? "Saving..." : "Save Slip"}
           </Button>
-          {/* Terms */}
-          <Card>
-            <CardContent className="p-4 text-xs text-muted-foreground space-y-2">
-              <h4 className="font-medium">नियम एवं शर्तें</h4>
-              <p>1. माल सूखा होना अनिवार्य है। सही वजन की जांच कर लें।</p>
-              <p>2. भुगतान सरकारी नियम अनुसार बैंक खाते में भेजा जाएगा।</p>
-              <p>3. वजन की जांच कर लें।</p>
-            </CardContent>
-          </Card>
         </form>
       </Form>
     </div>

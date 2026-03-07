@@ -1,9 +1,6 @@
 import {
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -12,7 +9,7 @@ import type {
   ColumnFiltersState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { InventoryDetailsDialog } from "./InventoryDetailsDialog";
+import { InventoryDetailsPanel } from "./InventoryDetailsDialog";
 
 import {
   Table,
@@ -22,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { mockData, type Inventory } from "./mockData";
 import { tableColumns } from "./tableColumn";
 import { useState } from "react";
 import {
@@ -37,9 +33,59 @@ import {
 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { usePurchaseSlips } from "@/hooks/usePurchaseSlips";
+
+export type Weight = {
+  id: number;
+  value: number;
+  slipId: number;
+};
+
+export type CreatedBy = {
+  id: number;
+  name: string;
+  email: string;
+  role: "ADMIN" | "USER";
+};
+
+export type Inventory = {
+  id: number;
+
+  slipNo: string;
+
+  date: string;
+
+  farmer: string;
+
+  location: string;
+
+  mobile: string;
+
+  item: string;
+
+  type: string;
+
+  grade: string;
+
+  rate: number;
+
+  totalWeight: number;
+
+  totalAmount: number;
+
+  status: "PENDING" | "CONFIRMED" | "PAYMENT_PENDING" | "PAYMENT_DONE";
+
+  createdById: number;
+
+  createdAt: string;
+
+  weights: Weight[];
+
+  createdBy: CreatedBy;
+};
 
 export function InventoryTable() {
-  const [showFilter, setShowFilter] = useState<boolean>(false);
+  // const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -48,141 +94,160 @@ export function InventoryTable() {
   const [open, setOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(15);
+
+  const { data, isLoading, refetch } = usePurchaseSlips({
+    page: pageIndex + 1,
+    limit: pageSize,
+    farmer: globalFilter,
+    sortBy: sorting[0]?.id,
+    order: sorting[0]?.desc ? "desc" : "asc",
+  });
+
   const table = useReactTable({
-    data: mockData,
+    data: data?.data ?? [],
     columns: tableColumns,
+
     state: {
       sorting,
       columnFilters,
       globalFilter,
       rowSelection,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    enableRowSelection: true,
-    initialState: {
       pagination: {
-        pageSize: 10,
+        pageIndex,
+        pageSize,
       },
     },
+
+    manualPagination: true,
+    manualSorting: true,
+
+    pageCount: data?.pagination?.totalPages ?? 0,
+
+    onSortingChange: setSorting,
+
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
+
+      setPageIndex(next.pageIndex);
+      setPageSize(next.pageSize);
+    },
+
+    getCoreRowModel: getCoreRowModel(),
   });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    setShowFilter(false);
-    // Reset all states
+
+    // setShowFilter(false);
     setSorting([]);
     setColumnFilters([]);
     setGlobalFilter("");
     setRowSelection({});
-    table.setPageIndex(0);
+    setPageIndex(0);
 
-    // Mock API delay (2 sec)
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 2000);
+    await refetch();
+
+    setIsRefreshing(false);
   };
 
+  const totalRows = data?.pagination?.total ?? 0;
   return (
     <>
-      <div className="rounded-md border">
-        <div className="p-4 flex justify-between">
+      <div className="flex flex-col h-[calc(100vh-120px)] border rounded-md bg-background">
+        <div className="flex items-center justify-between p-4 border-b bg-muted/20">
           <Input
-            placeholder="Search..."
+            placeholder="Search farmer..."
             value={globalFilter ?? ""}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="border px-3 py-2 rounded w-64"
+            className="w-64"
           />
+
           <div className="flex gap-2">
             <Button
               variant="outline"
+              size="icon"
               onClick={handleRefresh}
-              disabled={isRefreshing}
+              disabled={isRefreshing || isLoading}
             >
               <RotateCw
-                className={`h-4 w-4 transition-all duration-300 ${
-                  isRefreshing ? "animate-spin text-primary" : ""
+                className={`h-4 w-4 ${
+                  isRefreshing || isLoading ? "animate-spin text-primary" : ""
                 }`}
               />
             </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setShowFilter((state) => !state)}
-              disabled={isRefreshing}
-            >
-              <Funnel />
-            </Button>
           </div>
         </div>
-        <Table>
-          <TableHeader className="bg-[#E8DCC8] dark:bg-[#3A3126]">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <>
-                {/* COLUMN TITLES ROW */}
-                <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                  {headerGroup.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="border-r last:border-r-0 h-14 px-4"
-                      style={{ width: header.getSize() }}
-                    >
-                      <div
-                        className={`flex items-center justify-between ${
-                          header.column.getCanSort() ? "cursor-pointer" : ""
-                        }`}
-                        onClick={
-                          header.column.getCanSort()
-                            ? header.column.getToggleSortingHandler()
-                            : undefined
-                        }
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-[#E8DCC8] dark:bg-[#3A3126]">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <>
+                  {/* COLUMN TITLES ROW */}
+                  <TableRow
+                    key={headerGroup.id}
+                    className="hover:bg-transparent"
+                  >
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="border-r last:border-r-0 h-14 px-4"
+                        style={{ width: header.getSize() }}
                       >
-                        <span>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                        </span>
-
-                        {header.column.getCanSort() && (
-                          <div className="flex flex-col ml-2">
-                            {header.column.getIsSorted() === "asc" ? (
-                              <>
-                                <ChevronUp size={14} />
-                                <ChevronDown
-                                  size={14}
-                                  className="opacity-20 -mt-1"
-                                />
-                              </>
-                            ) : header.column.getIsSorted() === "desc" ? (
-                              <>
-                                <ChevronUp size={14} className="opacity-20" />
-                                <ChevronDown size={14} className="-mt-1" />
-                              </>
-                            ) : (
-                              <>
-                                <ChevronUp size={14} className="opacity-30" />
-                                <ChevronDown
-                                  size={14}
-                                  className="opacity-30 -mt-1"
-                                />
-                              </>
+                        <div
+                          className={`flex items-center justify-between ${
+                            header.column.getCanSort() ? "cursor-pointer" : ""
+                          }`}
+                          onClick={
+                            header.column.getCanSort()
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
+                        >
+                          <span>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
                             )}
-                          </div>
-                        )}
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
+                          </span>
 
-                {/* FILTER ROW */}
-                {showFilter && (
+                          {header.column.getCanSort() && (
+                            <div className="flex flex-col ml-2">
+                              {header.column.getIsSorted() === "asc" ? (
+                                <>
+                                  <ChevronUp size={14} />
+                                  <ChevronDown
+                                    size={14}
+                                    className="opacity-20 -mt-1"
+                                  />
+                                </>
+                              ) : header.column.getIsSorted() === "desc" ? (
+                                <>
+                                  <ChevronUp size={14} className="opacity-20" />
+                                  <ChevronDown size={14} className="-mt-1" />
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronUp size={14} className="opacity-30" />
+                                  <ChevronDown
+                                    size={14}
+                                    className="opacity-30 -mt-1"
+                                  />
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+
+                  {/* FILTER ROW */}
+                  {/* {showFilter && (
                   <TableRow className="hover:bg-transparent">
                     {headerGroup.headers.map((header) => (
                       <TableCell
@@ -207,34 +272,60 @@ export function InventoryTable() {
                       </TableCell>
                     ))}
                   </TableRow>
-                )}
-              </>
-            ))}
-          </TableHeader>
+                )} */}
+                </>
+              ))}
+            </TableHeader>
 
-          <TableBody>
-            {table.getPaginationRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                onClick={() => {
-                  setSelectedRow(row.original);
-                  setOpen(true);
-                }}
-                className="cursor-pointer odd:bg-white even:bg-muted/30 dark:odd:bg-background dark:even:bg-muted/20"
-              >
-                {row.getVisibleCells().map((cell) => (
+            <TableBody>
+              {isLoading ? (
+                [...Array(pageSize)].map((_, i) => (
+                  <TableRow key={i}>
+                    {tableColumns.map((_, j) => (
+                      <TableCell key={j}>
+                        <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows.length === 0 ? (
+                <TableRow>
                   <TableCell
-                    key={cell.id}
-                    className="border-r last:border-r-0 px-4"
-                    style={{ width: cell.column.getSize() }}
+                    colSpan={tableColumns.length}
+                    className="text-center py-10 text-muted-foreground"
                   >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    No purchase slips found
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </TableRow>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    onClick={() => {
+                      setSelectedRow(row.original);
+                      setOpen(true);
+                    }}
+                    className="hover:bg-muted/40 transition-colors cursor-pointer"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="border-r last:border-r-0 px-4"
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
         <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30 dark:bg-muted/10">
           {/* Left Side - Rows Info */}
           <div className="flex items-center gap-6">
@@ -242,22 +333,14 @@ export function InventoryTable() {
             <span className="text-sm text-muted-foreground">
               Showing{" "}
               <span className="font-medium text-foreground">
-                {table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  1}
+                {totalRows === 0 ? 0 : pageIndex * pageSize + 1}
               </span>
               {" – "}
               <span className="font-medium text-foreground">
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
-                  table.getFilteredRowModel().rows.length,
-                )}
+                {Math.min((pageIndex + 1) * pageSize, totalRows)}
               </span>{" "}
               of{" "}
-              <span className="font-medium text-foreground">
-                {table.getFilteredRowModel().rows.length}
-              </span>
+              <span className="font-medium text-foreground">{totalRows}</span>
             </span>
 
             {/* Rows per page */}
@@ -271,7 +354,7 @@ export function InventoryTable() {
                 onChange={(e) => table.setPageSize(Number(e.target.value))}
                 className="h-8 rounded-md border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                {[10, 20, 50].map((size) => (
+                {[15, 20, 50].map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>
@@ -321,7 +404,7 @@ export function InventoryTable() {
           </div>
         </div>
       </div>
-      <InventoryDetailsDialog
+      <InventoryDetailsPanel
         data={selectedRow}
         open={open}
         onOpenChange={setOpen}
