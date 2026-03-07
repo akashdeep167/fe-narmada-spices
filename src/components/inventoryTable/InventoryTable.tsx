@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { tableColumns } from "./tableColumn";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -69,7 +69,7 @@ export type Inventory = {
   shortageWeight: number;
 };
 
-// ── Helper: returns sticky styles for a pinned column ─────────────────────────
+// ── Sticky pin styles + shadow for pinned left columns ────────────────────────
 function getPinStyles(column: any, isHeader = false): React.CSSProperties {
   const isPinned = column.getIsPinned();
   if (!isPinned) return {};
@@ -78,6 +78,9 @@ function getPinStyles(column: any, isHeader = false): React.CSSProperties {
     left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
     right: isPinned === "right" ? `${column.getAfter("right")}px` : undefined,
     zIndex: isHeader ? 20 : 1,
+    // subtle shadow so users know the column is pinned
+    boxShadow:
+      isPinned === "left" ? "2px 0 4px -2px rgba(0,0,0,0.12)" : undefined,
   };
 }
 
@@ -85,6 +88,7 @@ export function InventoryTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [inputValue, setInputValue] = useState(""); // debounced input
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [selectedRow, setSelectedRow] = useState<Inventory | null>(null);
   const [open, setOpen] = useState(false);
@@ -92,6 +96,15 @@ export function InventoryTable() {
 
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(15);
+
+  // ── Debounce search input by 400ms ────────────────────────────────────────
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setGlobalFilter(inputValue);
+      setPageIndex(0); // reset to page 1 on new search
+    }, 400);
+    return () => clearTimeout(t);
+  }, [inputValue]);
 
   const { data, isLoading, refetch } = usePurchaseSlips({
     page: pageIndex + 1,
@@ -136,6 +149,7 @@ export function InventoryTable() {
     setSorting([]);
     setColumnFilters([]);
     setGlobalFilter("");
+    setInputValue("");
     setRowSelection({});
     setPageIndex(0);
     await refetch();
@@ -151,8 +165,8 @@ export function InventoryTable() {
         <div className="flex items-center justify-between p-4 border-b bg-muted/20">
           <Input
             placeholder="Search farmer..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             className="w-64"
           />
           <div className="flex gap-2">
@@ -174,7 +188,7 @@ export function InventoryTable() {
         {/* Table */}
         <div className="flex-1 overflow-auto">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-[#E8DCC8] dark:bg-[#3A3126]">
+            <TableHeader className="sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="hover:bg-transparent">
                   {headerGroup.headers.map((header) => (
@@ -188,7 +202,9 @@ export function InventoryTable() {
                     >
                       <div
                         className={`flex items-center justify-between ${
-                          header.column.getCanSort() ? "cursor-pointer" : ""
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : ""
                         }`}
                         onClick={
                           header.column.getCanSort()
@@ -238,11 +254,19 @@ export function InventoryTable() {
 
             <TableBody>
               {isLoading ? (
+                // ── Skeleton: respects column widths ──────────────────────
                 [...Array(pageSize)].map((_, i) => (
-                  <TableRow key={i}>
-                    {tableColumns.map((_, j) => (
-                      <TableCell key={j}>
-                        <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  <TableRow key={i} className="hover:bg-transparent">
+                    {tableColumns.map((col, j) => (
+                      <TableCell
+                        key={j}
+                        className="border-r last:border-r-0 px-4"
+                        style={{ width: (col as any).size }}
+                      >
+                        <div
+                          className="h-4 bg-muted rounded animate-pulse"
+                          style={{ width: `${60 + ((j * 17) % 35)}%` }} // varied widths look more natural
+                        />
                       </TableCell>
                     ))}
                   </TableRow>
@@ -253,23 +277,26 @@ export function InventoryTable() {
                     colSpan={tableColumns.length}
                     className="text-center py-10 text-muted-foreground"
                   >
-                    No purchase slips found
+                    {/* ── Contextual empty message ────────────────────── */}
+                    No results
+                    {globalFilter ? ` for "${globalFilter}"` : " found"}
                   </TableCell>
                 </TableRow>
               ) : (
                 table.getRowModel().rows.map((row) => (
+                  // ── hover on group, applied per-cell to preserve pinned bg ──
                   <TableRow
                     key={row.id}
                     onClick={() => {
                       setSelectedRow(row.original);
                       setOpen(true);
                     }}
-                    className="hover:bg-muted/40 transition-colors cursor-pointer"
+                    className="cursor-pointer group"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="border-r last:border-r-0 px-4 bg-background"
+                        className="border-r last:border-r-0 px-4 bg-background group-hover:bg-muted/40 transition-colors"
                         style={{
                           width: cell.column.getSize(),
                           ...getPinStyles(cell.column),
@@ -337,10 +364,13 @@ export function InventoryTable() {
             >
               <ChevronLeft size={16} />
             </button>
+
             <span className="px-3 text-sm font-medium">
+              {/* ── Guard against 0/0 on first load ─────────────────── */}
               {table.getState().pagination.pageIndex + 1} /{" "}
-              {table.getPageCount()}
+              {Math.max(table.getPageCount(), 1)}
             </span>
+
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
