@@ -65,6 +65,8 @@ export type Inventory = {
   createdAt: string;
   weights: Weight[];
   createdBy: CreatedBy;
+  shortageAmount: number;
+  shortageWeight: number;
 };
 
 export function InventoryTable() {

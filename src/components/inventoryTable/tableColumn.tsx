@@ -138,15 +138,9 @@ export const tableColumns: ColumnDef<Inventory>[] = [
   },
 
   {
-    id: "totalWeightAfterShortage",
+    accessorKey: "shortageWeight",
     header: "कटौती के बाद वजन",
     size: 140,
-    cell: ({ row }) => {
-      const weight = row.original.totalWeight;
-      const afterShortage = weight * 0.97;
-
-      return afterShortage.toFixed(2);
-    },
   },
 
   {
@@ -161,16 +155,11 @@ export const tableColumns: ColumnDef<Inventory>[] = [
   },
 
   {
-    id: "totalAmountAfterShortage",
+    id: "shortageAmount",
     header: "कटौती के बाद रुपये",
     size: 160,
     cell: ({ row }) => {
-      const weight = row.original.totalWeight * 0.97;
-      const rate = row.original.rate;
-
-      const amount = weight * rate;
-
-      return `₹${amount.toLocaleString("en-IN", {
+      return `₹${row.original.shortageAmount.toLocaleString("en-IN", {
         maximumFractionDigits: 2,
       })}`;
     },
