@@ -69,8 +69,19 @@ export type Inventory = {
   shortageWeight: number;
 };
 
+// ── Helper: returns sticky styles for a pinned column ─────────────────────────
+function getPinStyles(column: any, isHeader = false): React.CSSProperties {
+  const isPinned = column.getIsPinned();
+  if (!isPinned) return {};
+  return {
+    position: "sticky",
+    left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
+    right: isPinned === "right" ? `${column.getAfter("right")}px` : undefined,
+    zIndex: isHeader ? 20 : 1,
+  };
+}
+
 export function InventoryTable() {
-  // const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -93,57 +104,50 @@ export function InventoryTable() {
   const table = useReactTable({
     data: data?.data ?? [],
     columns: tableColumns,
-
+    initialState: {
+      columnPinning: {
+        left: ["status"],
+      },
+    },
     state: {
       sorting,
       columnFilters,
       globalFilter,
       rowSelection,
-      pagination: {
-        pageIndex,
-        pageSize,
-      },
+      pagination: { pageIndex, pageSize },
     },
-
     manualPagination: true,
     manualSorting: true,
-
     pageCount: data?.pagination?.totalPages ?? 0,
-
     onSortingChange: setSorting,
-
     onPaginationChange: (updater) => {
       const next =
         typeof updater === "function"
           ? updater({ pageIndex, pageSize })
           : updater;
-
       setPageIndex(next.pageIndex);
       setPageSize(next.pageSize);
     },
-
     getCoreRowModel: getCoreRowModel(),
   });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-
-    // setShowFilter(false);
     setSorting([]);
     setColumnFilters([]);
     setGlobalFilter("");
     setRowSelection({});
     setPageIndex(0);
-
     await refetch();
-
     setIsRefreshing(false);
   };
 
   const totalRows = data?.pagination?.total ?? 0;
+
   return (
     <>
       <div className="flex flex-col h-[calc(100vh-120px)] border rounded-md bg-background">
+        {/* Toolbar */}
         <div className="flex items-center justify-between p-4 border-b bg-muted/20">
           <Input
             placeholder="Search farmer..."
@@ -151,7 +155,6 @@ export function InventoryTable() {
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="w-64"
           />
-
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -167,98 +170,69 @@ export function InventoryTable() {
             </Button>
           </div>
         </div>
+
+        {/* Table */}
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-[#E8DCC8] dark:bg-[#3A3126]">
               {table.getHeaderGroups().map((headerGroup) => (
-                <>
-                  {/* COLUMN TITLES ROW */}
-                  <TableRow
-                    key={headerGroup.id}
-                    className="hover:bg-transparent"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="border-r last:border-r-0 h-14 px-4"
-                        style={{ width: header.getSize() }}
+                <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="border-r last:border-r-0 h-14 px-4 bg-[#E8DCC8] dark:bg-[#3A3126]"
+                      style={{
+                        width: header.getSize(),
+                        ...getPinStyles(header.column, true),
+                      }}
+                    >
+                      <div
+                        className={`flex items-center justify-between ${
+                          header.column.getCanSort() ? "cursor-pointer" : ""
+                        }`}
+                        onClick={
+                          header.column.getCanSort()
+                            ? header.column.getToggleSortingHandler()
+                            : undefined
+                        }
                       >
-                        <div
-                          className={`flex items-center justify-between ${
-                            header.column.getCanSort() ? "cursor-pointer" : ""
-                          }`}
-                          onClick={
-                            header.column.getCanSort()
-                              ? header.column.getToggleSortingHandler()
-                              : undefined
-                          }
-                        >
-                          <span>
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                          </span>
-
-                          {header.column.getCanSort() && (
-                            <div className="flex flex-col ml-2">
-                              {header.column.getIsSorted() === "asc" ? (
-                                <>
-                                  <ChevronUp size={14} />
-                                  <ChevronDown
-                                    size={14}
-                                    className="opacity-20 -mt-1"
-                                  />
-                                </>
-                              ) : header.column.getIsSorted() === "desc" ? (
-                                <>
-                                  <ChevronUp size={14} className="opacity-20" />
-                                  <ChevronDown size={14} className="-mt-1" />
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronUp size={14} className="opacity-30" />
-                                  <ChevronDown
-                                    size={14}
-                                    className="opacity-30 -mt-1"
-                                  />
-                                </>
-                              )}
-                            </div>
+                        <span>
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
-                        </div>
-                      </TableHead>
-                    ))}
-                  </TableRow>
+                        </span>
 
-                  {/* FILTER ROW */}
-                  {/* {showFilter && (
-                  <TableRow className="hover:bg-transparent">
-                    {headerGroup.headers.map((header) => (
-                      <TableCell
-                        key={header.id}
-                        className="border-r last:border-r-0 p-1"
-                      >
-                        {header.column.getCanFilter() ? (
-                          <Input
-                            value={
-                              (header.column.getFilterValue() ?? "") as string
-                            }
-                            onChange={(e) =>
-                              header.column.setFilterValue(
-                                header.column.columnDef.meta?.isNumeric
-                                  ? Number(e.target.value)
-                                  : e.target.value,
-                              )
-                            }
-                            className="h-8 text-xs bg-white"
-                          />
-                        ) : null}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                )} */}
-                </>
+                        {header.column.getCanSort() && (
+                          <div className="flex flex-col ml-2">
+                            {header.column.getIsSorted() === "asc" ? (
+                              <>
+                                <ChevronUp size={14} />
+                                <ChevronDown
+                                  size={14}
+                                  className="opacity-20 -mt-1"
+                                />
+                              </>
+                            ) : header.column.getIsSorted() === "desc" ? (
+                              <>
+                                <ChevronUp size={14} className="opacity-20" />
+                                <ChevronDown size={14} className="-mt-1" />
+                              </>
+                            ) : (
+                              <>
+                                <ChevronUp size={14} className="opacity-30" />
+                                <ChevronDown
+                                  size={14}
+                                  className="opacity-30 -mt-1"
+                                />
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
+                </TableRow>
               ))}
             </TableHeader>
 
@@ -295,8 +269,11 @@ export function InventoryTable() {
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="border-r last:border-r-0 px-4"
-                        style={{ width: cell.column.getSize() }}
+                        className="border-r last:border-r-0 px-4 bg-background"
+                        style={{
+                          width: cell.column.getSize(),
+                          ...getPinStyles(cell.column),
+                        }}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -311,10 +288,9 @@ export function InventoryTable() {
           </Table>
         </div>
 
+        {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30 dark:bg-muted/10">
-          {/* Left Side - Rows Info */}
           <div className="flex items-center gap-6">
-            {/* Showing info */}
             <span className="text-sm text-muted-foreground">
               Showing{" "}
               <span className="font-medium text-foreground">
@@ -328,12 +304,10 @@ export function InventoryTable() {
               <span className="font-medium text-foreground">{totalRows}</span>
             </span>
 
-            {/* Rows per page */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 Rows per page:
               </span>
-
               <select
                 value={table.getState().pagination.pageSize}
                 onChange={(e) => table.setPageSize(Number(e.target.value))}
@@ -348,7 +322,6 @@ export function InventoryTable() {
             </div>
           </div>
 
-          {/* Right Side - Pagination Controls */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => table.setPageIndex(0)}
@@ -357,7 +330,6 @@ export function InventoryTable() {
             >
               <ChevronsLeft size={16} />
             </button>
-
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
@@ -365,12 +337,10 @@ export function InventoryTable() {
             >
               <ChevronLeft size={16} />
             </button>
-
             <span className="px-3 text-sm font-medium">
               {table.getState().pagination.pageIndex + 1} /{" "}
               {table.getPageCount()}
             </span>
-
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
@@ -378,7 +348,6 @@ export function InventoryTable() {
             >
               <ChevronRight size={16} />
             </button>
-
             <button
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
@@ -389,6 +358,7 @@ export function InventoryTable() {
           </div>
         </div>
       </div>
+
       <InventoryDetailsPanel
         data={selectedRow}
         open={open}

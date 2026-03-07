@@ -15,7 +15,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
     accessorKey: "status",
     header: "स्थिति",
     size: 110,
-
+    enablePinning: true,
     cell: ({ row }) => {
       const { mutate, isPending } = useUpdatePurchaseSlip();
 
