@@ -94,7 +94,10 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[460px] p-0 flex flex-col">
+      <SheetContent
+        side="right"
+        className="w-full md:w-[520px] h-full overflow-y-auto"
+      >
         {/* HEADER */}
         <SheetHeader className="px-6 py-4 border-b bg-muted/20">
           <div className="flex items-center justify-between mr-6">

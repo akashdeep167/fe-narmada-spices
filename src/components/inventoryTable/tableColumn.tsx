@@ -51,12 +51,13 @@ export const tableColumns: ColumnDef<Inventory>[] = [
               <DropdownMenuItem
                 key={s}
                 disabled={isPending || s === status}
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
                   mutate({
                     id: row.original.id,
                     data: { status: s },
-                  })
-                }
+                  });
+                }}
               >
                 {s.replace("_", " ")}
               </DropdownMenuItem>

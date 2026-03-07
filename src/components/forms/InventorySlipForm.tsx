@@ -26,6 +26,7 @@ export type FormValues = {
   type: string;
   grade: string;
   rate: number;
+  createdById: number;
   weights: { value: number }[];
 };
 
@@ -58,7 +59,7 @@ function generateSlipNumber() {
   return `NS-${datePart}-${String(lastNumber).padStart(3, "0")}`;
 }
 
-export default function ModernInventorySlipForm({
+export default function InventorySlipForm({
   defaultValues,
   onSubmit,
   isSubmitting,
@@ -79,6 +80,7 @@ export default function ModernInventorySlipForm({
           type: "",
           grade: "",
           rate: 0,
+          createdById: 1,
           weights: [{ value: 0 }],
         },
   });

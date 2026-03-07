@@ -50,37 +50,21 @@ export type CreatedBy = {
 
 export type Inventory = {
   id: number;
-
   slipNo: string;
-
   date: string;
-
   farmer: string;
-
   location: string;
-
   mobile: string;
-
   item: string;
-
   type: string;
-
   grade: string;
-
   rate: number;
-
   totalWeight: number;
-
   totalAmount: number;
-
   status: "PENDING" | "CONFIRMED" | "PAYMENT_PENDING" | "PAYMENT_DONE";
-
   createdById: number;
-
   createdAt: string;
-
   weights: Weight[];
-
   createdBy: CreatedBy;
 };
 
