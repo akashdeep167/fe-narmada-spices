@@ -16,7 +16,7 @@ export function useDeletePurchaseSlip() {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["purchase-slips"] });
+      queryClient.invalidateQueries({ queryKey: ["purchaseSlips"] });
     },
   });
 }

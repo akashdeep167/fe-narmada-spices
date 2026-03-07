@@ -47,7 +47,7 @@ const InventoryRegister = () => {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="right"
-          className="w-full md:w-[520px] h-full overflow-y-auto"
+          className="w-full md:w-130 h-full overflow-y-auto"
         >
           <SheetHeader>
             <SheetTitle>Create Slip</SheetTitle>

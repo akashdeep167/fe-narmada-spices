@@ -24,6 +24,13 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+const ITEM_OPTIONS = [
+  { value: "Mahii", label: "Mahii", types: ["WS", "DC"] },
+  { value: "Seed Variety", label: "Seed Variety", types: ["WS", "DC"] },
+];
+
+const GRADES = ["A", "B", "C", "D"];
+
 export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
   const updateMutation = useUpdatePurchaseSlip();
   const deleteMutation = useDeletePurchaseSlip();
@@ -50,11 +57,8 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
   const updateWeights = (weights: number[]) => {
     setEditableData((prev) => {
       if (!prev) return prev;
-
       setIsDirty(true);
-
       const totalWeight = weights.reduce((s, w) => s + w, 0);
-
       return {
         ...prev,
         weights: weights.map((w, i) => ({
@@ -70,7 +74,6 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
 
   const handleDelete = () => {
     if (!confirm("Delete this slip?")) return;
-
     deleteMutation.mutate(editableData.id, {
       onSuccess: () => onOpenChange(false),
     });
@@ -78,25 +81,22 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
 
   const handleSave = () => {
     updateMutation.mutate(
-      {
-        id: editableData.id,
-        data: editableData,
-      },
-      {
-        onSuccess: () => {
-          setIsDirty(false);
-        },
-      },
+      { id: editableData.id, data: editableData },
+      { onSuccess: () => setIsDirty(false) },
     );
   };
 
   const weights = editableData.weights?.map((w) => w.value) ?? [];
 
+  // Derive available types based on currently selected item
+  const availableTypes = ITEM_OPTIONS.find((o) => o.value === editableData.item)
+    ?.types ?? ["WS", "DC"];
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full md:w-[520px] h-full overflow-y-auto"
+        className="w-full md:w-130 h-full overflow-y-auto"
       >
         {/* HEADER */}
         <SheetHeader className="px-6 py-4 border-b bg-muted/20">
@@ -114,13 +114,11 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
               value={editableData.farmer}
               onSave={(v: any) => updateField("farmer", v)}
             />
-
             <EditableRow
               label="Location"
               value={editableData.location}
               onSave={(v: any) => updateField("location", v)}
             />
-
             <EditableRow
               label="Mobile"
               value={editableData.mobile}
@@ -131,10 +129,39 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
           <Separator />
 
           <Section title="Purchase Details">
-            <EditableRow
+            {/* Item — select */}
+            <EditableSelectRow
+              label="Item"
+              value={editableData.item}
+              options={ITEM_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
+              onSave={(v) => {
+                updateField("item", v);
+                // Reset type if it's no longer valid for the new item
+                const newTypes =
+                  ITEM_OPTIONS.find((o) => o.value === v)?.types ?? [];
+                if (!newTypes.includes(editableData.type)) {
+                  updateField("type", "");
+                }
+              }}
+            />
+
+            {/* Type — select, options depend on selected item */}
+            <EditableSelectRow
+              label="Type"
+              value={editableData.type}
+              options={availableTypes.map((t) => ({ value: t, label: t }))}
+              onSave={(v) => updateField("type", v)}
+            />
+
+            {/* Grade — select */}
+            <EditableSelectRow
               label="Grade"
               value={editableData.grade}
-              onSave={(v: any) => updateField("grade", v)}
+              options={GRADES.map((g) => ({ value: g, label: g }))}
+              onSave={(v) => updateField("grade", v)}
             />
 
             <EditableRow
@@ -172,7 +199,6 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
           {isDirty && (
             <div className="text-sm text-amber-600">● Unsaved changes</div>
           )}
-
           <Button
             className="w-full"
             onClick={handleSave}
@@ -180,7 +206,6 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
           >
             {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
-
           <Button
             variant="destructive"
             className="w-full"
@@ -194,6 +219,8 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
     </Sheet>
   );
 }
+
+// ── Shared layout ─────────────────────────────────────────────────────────────
 
 function Section({ title, children }: any) {
   return (
@@ -212,6 +239,8 @@ function Row({ label, value }: any) {
     </div>
   );
 }
+
+// ── Inline text edit ──────────────────────────────────────────────────────────
 
 function EditableRow({
   label,
@@ -237,24 +266,22 @@ function EditableRow({
   return (
     <div className="flex justify-between items-center text-sm rounded-md px-2 py-1 hover:bg-muted/50 transition">
       <span className="text-muted-foreground">{label}</span>
-
       {editing ? (
         <div className="flex items-center gap-2">
           <input
             autoFocus
             value={localValue}
             onChange={(e) => {
-              const val = e.target.value;
-              setLocalValue(val);
-              onSave(val); // 🔥 save immediately
+              setLocalValue(e.target.value);
+              onSave(e.target.value);
             }}
             onKeyDown={(e) => {
               if (e.key === "Escape") cancel();
+              if (e.key === "Enter") setEditing(false);
             }}
             onBlur={() => setEditing(false)}
-            className="border rounded px-2 py-1 text-right w-32"
+            className="border rounded px-2 py-1 text-right w-32 text-sm"
           />
-
           <X
             size={16}
             className="cursor-pointer text-muted-foreground hover:text-foreground"
@@ -267,7 +294,6 @@ function EditableRow({
           className="flex items-center gap-2 text-right"
         >
           <span className="font-medium">{value || "-"}</span>
-
           <Pencil
             size={14}
             className="text-muted-foreground opacity-70 hover:opacity-100"
@@ -277,6 +303,69 @@ function EditableRow({
     </div>
   );
 }
+
+// ── Inline select edit ────────────────────────────────────────────────────────
+
+function EditableSelectRow({
+  label,
+  value,
+  options,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onSave: (value: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  const displayLabel =
+    options.find((o) => o.value === value)?.label ?? value ?? "-";
+
+  return (
+    <div className="flex justify-between items-center text-sm rounded-md px-2 py-1 hover:bg-muted/50 transition">
+      <span className="text-muted-foreground">{label}</span>
+      {editing ? (
+        <div className="flex items-center gap-2">
+          <select
+            autoFocus
+            value={value}
+            onChange={(e) => {
+              onSave(e.target.value);
+              setEditing(false);
+            }}
+            onBlur={() => setEditing(false)}
+            className="border rounded px-2 py-1 text-sm text-right bg-background"
+          >
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <X
+            size={16}
+            className="cursor-pointer text-muted-foreground hover:text-foreground"
+            onClick={() => setEditing(false)}
+          />
+        </div>
+      ) : (
+        <button
+          onClick={() => setEditing(true)}
+          className="flex items-center gap-2 text-right"
+        >
+          <span className="font-medium">{displayLabel}</span>
+          <Pencil
+            size={14}
+            className="text-muted-foreground opacity-70 hover:opacity-100"
+          />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Weights editor ────────────────────────────────────────────────────────────
 
 function WeightsEditor({ weights, rate, onChange }: any) {
   const totalWeight = weights.reduce((s: number, w: number) => s + w, 0);
@@ -288,11 +377,6 @@ function WeightsEditor({ weights, rate, onChange }: any) {
     onChange(newWeights);
   };
 
-  const addWeight = () => onChange([...weights, 0]);
-
-  const removeWeight = (index: number) =>
-    onChange(weights.filter((_: any, i: number) => i !== index));
-
   return (
     <Section title="Weights">
       {weights.map((w: number, i: number) => (
@@ -301,20 +385,20 @@ function WeightsEditor({ weights, rate, onChange }: any) {
           index={i}
           weight={w}
           onSave={(v: number) => updateWeight(i, v)}
-          onDelete={() => removeWeight(i)}
+          onDelete={() =>
+            onChange(weights.filter((_: any, idx: number) => idx !== i))
+          }
         />
       ))}
 
       <button
-        onClick={addWeight}
-        className="flex items-center gap-2 text-sm text-primary"
+        onClick={() => onChange([...weights, 0])}
+        className="flex items-center gap-2 text-sm text-primary mt-1"
       >
-        <Plus size={14} />
-        Add Bag
+        <Plus size={14} /> Add Bag
       </button>
 
       <Separator className="my-3" />
-
       <Row label="Total Weight" value={`${totalWeight} kg`} />
       <Row label="Total Amount" value={`₹${totalAmount}`} />
     </Section>
@@ -347,7 +431,6 @@ function EditableWeightRow({
   return (
     <div className="flex justify-between items-center bg-muted px-3 py-2 rounded text-sm">
       <span className="text-muted-foreground">Bag {index + 1}</span>
-
       {editing ? (
         <div className="flex items-center gap-2">
           <input
@@ -355,17 +438,17 @@ function EditableWeightRow({
             autoFocus
             value={value}
             onChange={(e) => {
-              const val = Number(e.target.value);
-              setValue(val);
-              onSave(val); // 🔥 instant update
+              const v = Number(e.target.value);
+              setValue(v);
+              onSave(v);
             }}
             onKeyDown={(e) => {
               if (e.key === "Escape") cancel();
+              if (e.key === "Enter") setEditing(false);
             }}
             onBlur={() => setEditing(false)}
-            className="w-20 border rounded px-2 py-1 text-right"
+            className="w-20 border rounded px-2 py-1 text-right text-sm"
           />
-
           <X
             size={16}
             className="cursor-pointer text-muted-foreground"
@@ -375,13 +458,11 @@ function EditableWeightRow({
       ) : (
         <div className="flex items-center gap-3">
           <span className="font-medium">{weight} kg</span>
-
           <Pencil
             size={14}
             className="cursor-pointer text-muted-foreground"
             onClick={() => setEditing(true)}
           />
-
           <Trash2
             size={14}
             onClick={onDelete}

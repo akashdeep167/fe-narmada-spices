@@ -103,28 +103,76 @@ export const tableColumns: ColumnDef<Inventory>[] = [
     size: 150,
   },
   {
+    accessorKey: "item",
+    header: "वस्तु",
+    size: 140,
+  },
+  {
+    accessorKey: "type",
+    header: "प्रकार",
+    size: 110,
+  },
+  {
     accessorKey: "grade",
     header: "श्रेणी",
     size: 90,
   },
   {
-    accessorKey: "lot",
-    header: "दागा",
+    id: "lot",
+    header: "दाग",
     size: 90,
+    cell: ({ row }) => {
+      return row.original.weights?.length ?? 0;
+    },
   },
   {
-    accessorKey: "price",
+    accessorKey: "rate",
     header: "भाव",
     size: 110,
   },
+
   {
     accessorKey: "totalWeight",
     header: "कुल वजन",
     size: 120,
   },
+
+  {
+    id: "totalWeightAfterShortage",
+    header: "कटौती के बाद वजन",
+    size: 140,
+    cell: ({ row }) => {
+      const weight = row.original.totalWeight;
+      const afterShortage = weight * 0.97;
+
+      return afterShortage.toFixed(2);
+    },
+  },
+
   {
     accessorKey: "totalAmount",
     header: "कुल रुपये",
     size: 140,
+    cell: ({ row }) => {
+      return `₹${row.original.totalAmount.toLocaleString("en-IN", {
+        maximumFractionDigits: 2,
+      })}`;
+    },
+  },
+
+  {
+    id: "totalAmountAfterShortage",
+    header: "कटौती के बाद रुपये",
+    size: 160,
+    cell: ({ row }) => {
+      const weight = row.original.totalWeight * 0.97;
+      const rate = row.original.rate;
+
+      const amount = weight * rate;
+
+      return `₹${amount.toLocaleString("en-IN", {
+        maximumFractionDigits: 2,
+      })}`;
+    },
   },
 ];
