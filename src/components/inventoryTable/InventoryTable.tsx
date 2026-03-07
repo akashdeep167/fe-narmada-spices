@@ -22,7 +22,6 @@ import {
 import { tableColumns } from "./tableColumn";
 import { useState } from "react";
 import {
-  Funnel,
   ChevronUp,
   ChevronDown,
   ChevronsLeft,

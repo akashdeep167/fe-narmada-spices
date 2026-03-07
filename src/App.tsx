@@ -2,7 +2,7 @@ import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import InventoryRegister from "./pages/InventoryRegister";
-import InventorySlipForm from "./components/forms/InventorySlipForm";
+// import InventorySlipForm from "./components/forms/InventorySlipForm";
 
 function App() {
   return (
@@ -10,7 +10,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<InventoryRegister />} />
-        <Route path="/entry" element={<InventorySlipForm />} />
+        {/* <Route path="/entry" element={<InventorySlipForm />} /> */}
       </Routes>
     </BrowserRouter>
   );
