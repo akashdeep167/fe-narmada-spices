@@ -12,10 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useCreateSlip } from "@/hooks/useCreateSlip";
+import { useAuth } from "@/hooks/useAuth";
 
 const InventoryRegister = () => {
   const [open, setOpen] = useState(false);
   const createSlipMutation = useCreateSlip();
+  const { user } = useAuth();
 
   const handleCreateSlip = async (values: any) => {
     // TODO: call your API
@@ -23,6 +25,9 @@ const InventoryRegister = () => {
 
     setOpen(false);
   };
+
+  // Only PURCHASER and ADMIN can create slips
+  const canCreateSlip = user && ["PURCHASER", "ADMIN"].includes(user.role);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -32,16 +37,18 @@ const InventoryRegister = () => {
         <InventoryTable />
       </div>
 
-      {/* FLOATING BUTTON */}
-      <div className="fixed bottom-6 right-6">
-        <Button
-          onClick={() => setOpen(true)}
-          size="lg"
-          className="rounded-full shadow-lg h-14 w-14 p-0"
-        >
-          <Plus size={24} />
-        </Button>
-      </div>
+      {/* FLOATING BUTTON - Only show for PURCHASER and ADMIN */}
+      {canCreateSlip && (
+        <div className="fixed bottom-6 right-6">
+          <Button
+            onClick={() => setOpen(true)}
+            size="lg"
+            className="rounded-full shadow-lg h-14 w-14 p-0"
+          >
+            <Plus size={24} />
+          </Button>
+        </div>
+      )}
 
       {/* CREATE SLIP PANEL */}
       <Sheet open={open} onOpenChange={setOpen}>

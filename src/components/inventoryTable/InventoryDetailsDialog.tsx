@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 import {
   Sheet,
@@ -13,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { useUpdatePurchaseSlip } from "@/hooks/useUpdatePurchaseSlip";
 import { useDeletePurchaseSlip } from "@/hooks/useDeletePurchaseSlip";
+import { useAuth } from "@/hooks/useAuth";
 
 import type { Inventory } from "./InventoryTable";
 
@@ -34,6 +36,7 @@ const GRADES = ["A", "B", "C", "D"];
 export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
   const updateMutation = useUpdatePurchaseSlip();
   const deleteMutation = useDeletePurchaseSlip();
+  const { user } = useAuth();
 
   const [editableData, setEditableData] = useState<Inventory | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -75,14 +78,28 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
   const handleDelete = () => {
     if (!confirm("Delete this slip?")) return;
     deleteMutation.mutate(editableData.id, {
-      onSuccess: () => onOpenChange(false),
+      onSuccess: () => {
+        toast.success("Slip deleted successfully");
+        onOpenChange(false);
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete slip");
+      },
     });
   };
 
   const handleSave = () => {
     updateMutation.mutate(
       { id: editableData.id, data: editableData },
-      { onSuccess: () => setIsDirty(false) },
+      {
+        onSuccess: () => {
+          toast.success("Slip updated successfully");
+          setIsDirty(false);
+        },
+        onError: (error: any) => {
+          toast.error(error.message || "Failed to update slip");
+        },
+      },
     );
   };
 
@@ -206,14 +223,16 @@ export function InventoryDetailsPanel({ data, open, onOpenChange }: Props) {
           >
             {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
-          <Button
-            variant="destructive"
-            className="w-full"
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete Slip"}
-          </Button>
+          {user && user.role === "ADMIN" && (
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Slip"}
+            </Button>
+          )}
         </div>
       </SheetContent>
     </Sheet>

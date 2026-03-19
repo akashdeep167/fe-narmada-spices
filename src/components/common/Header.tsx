@@ -8,11 +8,30 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
-import { Menu, Moon, Sun, Globe, LogOut, User, Settings } from "lucide-react";
+import {
+  Menu,
+  Moon,
+  Sun,
+  Globe,
+  LogOut,
+  User,
+  Settings,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { AddUserModal } from "./AddUserModal";
+import { AllUsersModal } from "./AllUsersModal";
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { i18n } = useTranslation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isAllUsersOpen, setIsAllUsersOpen] = useState(false);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "hi" : "en";
@@ -20,10 +39,9 @@ const Header = () => {
     localStorage.setItem("lng", newLang);
   };
 
-  const user = {
-    name: "Akash",
-    role: "Admin",
-    email: "akash@narmadaspices.com",
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -49,16 +67,49 @@ const Header = () => {
           {/* USER PROFILE */}
           <div className="p-5 flex items-center gap-4 bg-muted/40">
             <Avatar className="h-10 w-10">
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
             </Avatar>
 
             <div className="flex flex-col">
-              <span className="font-medium">{user.name}</span>
-              <span className="text-xs text-muted-foreground">{user.role}</span>
+              <span className="font-medium">{user?.name || "User"}</span>
+              <span className="text-xs text-muted-foreground">
+                {user?.role}
+              </span>
             </div>
           </div>
 
           <Separator />
+
+          {/* ADMIN SECTION */}
+          {user?.role === "ADMIN" && (
+            <>
+              <div className="p-4 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  Administration
+                </p>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3"
+                  onClick={() => setIsAddUserOpen(true)}
+                >
+                  <UserPlus size={16} />
+                  Add New User
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3"
+                  onClick={() => setIsAllUsersOpen(true)}
+                >
+                  <Users size={16} />
+                  All Users
+                </Button>
+              </div>
+
+              <Separator />
+            </>
+          )}
 
           {/* SETTINGS SECTION */}
           <div className="p-4 space-y-2">
@@ -86,7 +137,6 @@ const Header = () => {
           </div>
 
           <Separator />
-
           {/* ACCOUNT SECTION */}
           <div className="p-4 space-y-2">
             <p className="text-xs font-medium text-muted-foreground mb-2">
@@ -106,6 +156,7 @@ const Header = () => {
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 text-red-500"
+              onClick={handleLogout}
             >
               <LogOut size={16} />
               Logout
@@ -113,6 +164,12 @@ const Header = () => {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ADD USER MODAL */}
+      <AddUserModal open={isAddUserOpen} onOpenChange={setIsAddUserOpen} />
+
+      {/* ALL USERS MODAL */}
+      <AllUsersModal open={isAllUsersOpen} onOpenChange={setIsAllUsersOpen} />
     </header>
   );
 };

@@ -15,8 +15,11 @@ import {
   FormLabel,
   FormMessage,
 } from "../components/ui/form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useLogin } from "@/hooks/useLogin";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
@@ -28,6 +31,16 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useTranslation();
+  const loginMutation = useLogin();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -37,9 +50,23 @@ const LoginPage = () => {
     },
   });
 
-  const handleLogin = (data: LoginFormData) => {
-    console.log("Login Data:", data);
+  const handleLogin = async (data: LoginFormData) => {
+    try {
+      await loginMutation.mutateAsync({
+        username: data.userId,
+        password: data.password,
+      });
+    } catch (error: any) {
+      form.setError("root", {
+        message: error.message || "Login failed. Please try again.",
+      });
+    }
   };
+
+  // Don't show login form if already authenticated
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-12 min-h-screen items-center p-4 pt-16">
@@ -58,6 +85,11 @@ const LoginPage = () => {
             onSubmit={form.handleSubmit(handleLogin)}
             className="w-full max-w-sm space-y-6"
           >
+            {form.formState.errors.root && (
+              <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
+                {form.formState.errors.root.message}
+              </div>
+            )}
             <FormField
               control={form.control}
               name="userId"
@@ -101,8 +133,12 @@ const LoginPage = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              LOGIN
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? "LOGGING IN..." : "LOGIN"}
             </Button>
           </form>
         </Form>

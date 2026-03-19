@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useUpdatePurchaseSlip } from "@/hooks/useUpdatePurchaseSlip";
+import { useAuth } from "@/hooks/useAuth";
 import type { Inventory } from "./InventoryTable";
 
 export const tableColumns: ColumnDef<Inventory>[] = [
@@ -18,6 +19,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
     enablePinning: true,
     cell: ({ row }) => {
       const { mutate, isPending } = useUpdatePurchaseSlip();
+      const { user } = useAuth();
 
       const status = row.original.status;
 
@@ -28,41 +30,59 @@ export const tableColumns: ColumnDef<Inventory>[] = [
         PAYMENT_DONE: "bg-green-100 text-green-800 border-green-300",
       };
 
-      const statuses = [
+      const allStatuses = [
         "PENDING",
         "CONFIRMED",
         "PAYMENT_PENDING",
         "PAYMENT_DONE",
       ];
 
+      // Determine which statuses the user can change to based on their role
+      let allowedStatuses: string[] = [];
+      if (user?.role === "SUPERVISOR") {
+        // SUPERVISOR can confirm slips (PENDING -> CONFIRMED -> PAYMENT_PENDING)
+        allowedStatuses = ["PENDING", "CONFIRMED", "PAYMENT_PENDING"];
+      } else if (user?.role === "ADMIN") {
+        // ADMIN can do everything
+        allowedStatuses = allStatuses;
+      } else {
+        // Other roles cannot change status
+        allowedStatuses = [];
+      }
+
+      const canChangeStatus = allowedStatuses.length > 0;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border cursor-pointer hover:opacity-90 transition ${statusColors[status]}`}
+              className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border cursor-pointer hover:opacity-90 transition ${statusColors[status]} ${!canChangeStatus ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={!canChangeStatus}
             >
               {status.replace("_", " ")}
               <ChevronDown size={12} />
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="start">
-            {statuses.map((s) => (
-              <DropdownMenuItem
-                key={s}
-                disabled={isPending || s === status}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  mutate({
-                    id: row.original.id,
-                    data: { status: s },
-                  });
-                }}
-              >
-                {s.replace("_", " ")}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
+          {canChangeStatus && (
+            <DropdownMenuContent align="start">
+              {allowedStatuses.map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  disabled={isPending || s === status}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    mutate({
+                      id: row.original.id,
+                      data: { status: s },
+                    });
+                  }}
+                >
+                  {s.replace("_", " ")}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          )}
         </DropdownMenu>
       );
     },

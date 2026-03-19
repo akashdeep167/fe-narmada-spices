@@ -1,12 +1,20 @@
+import { getAuthHeader } from "./auth";
+
 export async function createSlip(data: any) {
   try {
     const res = await fetch("http://localhost:5001/api/purchase-slips", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-      },
+        ...getAuthHeader(),
+      } as HeadersInit,
       body: JSON.stringify(data),
     });
+
+    if (res.status === 401) {
+      // Token expired - will be handled by the global handler
+      throw new Error("Token expired");
+    }
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -41,7 +49,16 @@ export async function getPurchaseSlips(params: {
 
   const res = await fetch(
     `http://localhost:5001/api/purchase-slips?${query.toString()}`,
+    {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    },
   );
+
+  if (res.status === 401) {
+    throw new Error("Token expired");
+  }
 
   if (!res.ok) {
     throw new Error("Failed to fetch slips");
@@ -59,9 +76,14 @@ export async function updatePurchaseSlip(
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-      },
+        ...getAuthHeader(),
+      } as HeadersInit,
       body: JSON.stringify(data),
     });
+
+    if (res.status === 401) {
+      throw new Error("Token expired");
+    }
 
     if (!res.ok) {
       const error = await res.text();
@@ -72,6 +94,30 @@ export async function updatePurchaseSlip(
     return res.json();
   } catch (error) {
     console.error("Update slip request error:", error);
+    throw error;
+  }
+}
+
+export async function deletePurchaseSlip(id: number) {
+  try {
+    const res = await fetch(`http://localhost:5001/api/purchase-slips/${id}`, {
+      method: "DELETE",
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+
+    if (res.status === 401) {
+      throw new Error("Token expired");
+    }
+
+    if (!res.ok) {
+      throw new Error("Failed to delete slip");
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Delete slip request error:", error);
     throw error;
   }
 }

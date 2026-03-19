@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAuthHeader } from "@/api/auth";
 
 export function useDeletePurchaseSlip() {
   const queryClient = useQueryClient();
@@ -7,7 +8,12 @@ export function useDeletePurchaseSlip() {
     mutationFn: async (id: number) => {
       const res = await fetch(
         `http://localhost:5001/api/purchase-slips/${id}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: {
+            ...getAuthHeader(),
+          } as HeadersInit,
+        },
       );
 
       if (!res.ok) throw new Error("Failed to delete slip");
