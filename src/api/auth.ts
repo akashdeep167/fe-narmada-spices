@@ -1,3 +1,5 @@
+import { config } from "../config";
+
 export interface LoginResponse {
   message: string;
   token: string;
@@ -32,7 +34,7 @@ function handleTokenExpiration(): void {
 
 export async function login(username: string, password: string) {
   try {
-    const res = await fetch("http://localhost:5001/api/auth/signin", {
+    const res = await fetch(`${config.apiBaseUrl}/api/auth/signin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -64,7 +66,7 @@ export function getAuthHeader(): Record<string, string> {
 
 export async function fetchAllUsers() {
   try {
-    const res = await fetch("http://localhost:5001/api/users", {
+    const res = await fetch(`${config.apiBaseUrl}/api/users`, {
       method: "GET",
       headers: {
         ...getAuthHeader(),
@@ -92,7 +94,7 @@ export async function updateUser(
   data: Partial<User & { password?: string }>,
 ) {
   try {
-    const res = await fetch(`http://localhost:5001/api/users/${id}`, {
+    const res = await fetch(`${config.apiBaseUrl}/api/users/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -120,7 +122,7 @@ export async function updateUser(
 
 export async function deleteUser(id: number) {
   try {
-    const res = await fetch(`http://localhost:5001/api/users/${id}`, {
+    const res = await fetch(`${config.apiBaseUrl}/api/users/${id}`, {
       method: "DELETE",
       headers: {
         ...getAuthHeader(),

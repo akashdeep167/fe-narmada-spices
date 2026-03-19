@@ -1,8 +1,9 @@
 import { getAuthHeader } from "./auth";
+import { config } from "../config";
 
 export async function createSlip(data: any) {
   try {
-    const res = await fetch("http://localhost:5001/api/purchase-slips", {
+    const res = await fetch(`${config.apiBaseUrl}/api/purchase-slips`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,7 +49,7 @@ export async function getPurchaseSlips(params: {
   if (params.item) query.append("item", params.item);
 
   const res = await fetch(
-    `http://localhost:5001/api/purchase-slips?${query.toString()}`,
+    `${config.apiBaseUrl}/api/purchase-slips?${query.toString()}`,
     {
       headers: {
         ...getAuthHeader(),
@@ -72,7 +73,7 @@ export async function updatePurchaseSlip(
   data: Record<string, any>,
 ) {
   try {
-    const res = await fetch(`http://localhost:5001/api/purchase-slips/${id}`, {
+    const res = await fetch(`${config.apiBaseUrl}/api/purchase-slips/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -100,7 +101,7 @@ export async function updatePurchaseSlip(
 
 export async function deletePurchaseSlip(id: number) {
   try {
-    const res = await fetch(`http://localhost:5001/api/purchase-slips/${id}`, {
+    const res = await fetch(`${config.apiBaseUrl}/api/purchase-slips/${id}`, {
       method: "DELETE",
       headers: {
         ...getAuthHeader(),
