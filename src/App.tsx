@@ -6,10 +6,13 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ToastProvider } from "./providers/toast-provider";
 import { useTokenExpiration } from "./hooks/useTokenExpiration";
+import { useClearCacheOnLogout } from "./hooks/useClearCacheOnLogout";
+import QueryProvider from "./providers/query-provider";
 // import InventorySlipForm from "./components/forms/InventorySlipForm";
 
 function AppContent() {
   useTokenExpiration();
+  useClearCacheOnLogout();
 
   return (
     <Routes>
@@ -31,10 +34,12 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider />
-        <AppContent />
-      </AuthProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <ToastProvider />
+          <AppContent />
+        </AuthProvider>
+      </QueryProvider>
     </BrowserRouter>
   );
 }

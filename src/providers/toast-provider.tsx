@@ -1,5 +1,5 @@
 import { Toaster } from "sonner";
 
 export function ToastProvider() {
-  return <Toaster position="top-right" theme="light" />;
+  return <Toaster position="top-right" theme="light" closeButton />;
 }

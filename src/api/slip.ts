@@ -1,4 +1,4 @@
-import { getAuthHeader } from "./auth";
+import { getAuthHeader, handleTokenExpiration } from "./auth";
 import { config } from "../config";
 
 export async function createSlip(data: any) {
@@ -13,7 +13,7 @@ export async function createSlip(data: any) {
     });
 
     if (res.status === 401) {
-      // Token expired - will be handled by the global handler
+      handleTokenExpiration();
       throw new Error("Token expired");
     }
 
@@ -58,6 +58,7 @@ export async function getPurchaseSlips(params: {
   );
 
   if (res.status === 401) {
+    handleTokenExpiration();
     throw new Error("Token expired");
   }
 
@@ -83,6 +84,7 @@ export async function updatePurchaseSlip(
     });
 
     if (res.status === 401) {
+      handleTokenExpiration();
       throw new Error("Token expired");
     }
 
@@ -109,6 +111,7 @@ export async function deletePurchaseSlip(id: number) {
     });
 
     if (res.status === 401) {
+      handleTokenExpiration();
       throw new Error("Token expired");
     }
 

@@ -97,128 +97,144 @@ export function AddUserModal({ open, onOpenChange }: AddUserModalProps) {
           <SheetTitle>Add New User</SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6">
+        <div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {form.formState.errors.root && (
-                <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
-                  {form.formState.errors.root.message}
-                </div>
-              )}
-
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
+              <div className="m-4 space-y-4">
+                {form.formState.errors.root && (
+                  <div className="text-sm text-red-500 bg-red-50 p-3 rounded">
+                    {form.formState.errors.root.message}
+                  </div>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter full name"
+                          autoComplete="off"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="Enter email address"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter username"
+                          autoComplete="off"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Enter email address"
+                          autoComplete="off"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role *</FormLabel>
-                    <FormControl>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-between"
-                          >
-                            {field.value || "Select a role"}
-                            <ChevronDown size={16} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-48">
-                          <DropdownMenuItem
-                            onClick={() => field.onChange("PURCHASER")}
-                          >
-                            Purchaser
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => field.onChange("SUPERVISOR")}
-                          >
-                            Supervisor
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => field.onChange("FINANCER")}
-                          >
-                            Financer
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => field.onChange("ADMIN")}
-                          >
-                            Admin
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Enter password"
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create User"}
-              </Button>
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role *</FormLabel>
+                      <FormControl>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-between"
+                            >
+                              {field.value || "Select a role"}
+                              <ChevronDown size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => field.onChange("PURCHASER")}
+                            >
+                              Purchaser
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => field.onChange("SUPERVISOR")}
+                            >
+                              Supervisor
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => field.onChange("FINANCER")}
+                            >
+                              Financer
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => field.onChange("ADMIN")}
+                            >
+                              Admin
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creating..." : "Create User"}
+                </Button>
+              </div>
             </form>
           </Form>
         </div>

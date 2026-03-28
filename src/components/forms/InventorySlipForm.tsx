@@ -94,9 +94,9 @@ export default function InventorySlipForm({
           item: "",
           type: "",
           grade: "",
-          rate: 0,
+          rate: "" as any,
           createdById: 1,
-          weights: [{ value: 0 }],
+          weights: [{ value: "" as any }],
         },
   });
 
@@ -126,6 +126,16 @@ export default function InventorySlipForm({
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6 pb-16 font-sans">
+      <style>{`
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <div className="mx-auto flex max-w-md flex-col gap-3">
         {/* ── Header ── */}
         <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3">
@@ -273,9 +283,11 @@ export default function InventorySlipForm({
                         <input
                           className={inputCls}
                           type="number"
-                          placeholder="0"
-                          min="0"
+                          placeholder="दर दर्ज करें"
                           step="0.01"
+                          onWheel={(e) =>
+                            (e.currentTarget as HTMLInputElement).blur()
+                          }
                           {...field}
                         />
                       </Field>
@@ -302,9 +314,9 @@ export default function InventorySlipForm({
                       render={({ field }) => (
                         <input
                           type="number"
-                          placeholder="0.00"
-                          min="0"
-                          step="0.01"
+                          onWheel={(e) =>
+                            (e.currentTarget as HTMLInputElement).blur()
+                          }
                           {...field}
                           className="flex-1 bg-transparent text-right text-[15px] font-medium text-gray-900 outline-none placeholder:text-gray-300"
                         />

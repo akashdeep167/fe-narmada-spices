@@ -26,7 +26,7 @@ export function setTokenExpirationHandler(handler: (() => void) | null): void {
   tokenExpirationHandler = handler;
 }
 
-function handleTokenExpiration(): void {
+export function handleTokenExpiration(): void {
   if (tokenExpirationHandler) {
     tokenExpirationHandler();
   }

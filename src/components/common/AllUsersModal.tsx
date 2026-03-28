@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Edit2, Check, X } from "lucide-react";
 import type { User } from "@/api/auth";
 import { fetchAllUsers, updateUser, deleteUser } from "@/api/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AllUsersModalProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface AllUsersModalProps {
 }
 
 export function AllUsersModal({ open, onOpenChange }: AllUsersModalProps) {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export function AllUsersModal({ open, onOpenChange }: AllUsersModalProps) {
           <SheetTitle>All Users</SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6">
+        <div>
           {error && (
             <div className="text-sm text-red-500 bg-red-50 p-3 rounded mb-4">
               {error}
@@ -111,9 +113,9 @@ export function AllUsersModal({ open, onOpenChange }: AllUsersModalProps) {
               <p className="text-muted-foreground">No users found</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {users.map((user) => (
-                <div key={user.id} className="border rounded-lg p-4">
+                <div key={user.id} className="border rounded-lg p-4 m-4">
                   {editingId === user.id ? (
                     // Edit Mode
                     <div className="space-y-3">
@@ -215,14 +217,16 @@ export function AllUsersModal({ open, onOpenChange }: AllUsersModalProps) {
                         >
                           <Edit2 size={14} />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(user.id)}
-                          disabled={isDeleting === user.id}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                        {currentUser?.id !== user.id && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(user.id)}
+                            disabled={isDeleting === user.id}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
