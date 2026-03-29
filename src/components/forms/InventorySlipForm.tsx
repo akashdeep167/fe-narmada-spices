@@ -32,13 +32,6 @@ const ITEM_OPTIONS = [
 
 const GRADES = ["A", "B", "C", "D"];
 
-function generateSlipNumber() {
-  const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const n = Number(localStorage.getItem("lastSlipNo") || 0) + 1;
-  localStorage.setItem("lastSlipNo", String(n));
-  return `NS-${datePart}-${String(n).padStart(3, "0")}`;
-}
-
 const inputCls =
   "w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 placeholder:text-gray-400";
 
@@ -100,10 +93,6 @@ export default function InventorySlipForm({
         },
   });
 
-  useEffect(() => {
-    if (!defaultValues) form.setValue("slipNo", generateSlipNumber());
-  }, []);
-
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "weights",
@@ -162,6 +151,25 @@ export default function InventorySlipForm({
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-3"
           >
+            {/* ── Slip Number ── */}
+            <SectionCard title="स्लिप विवरण">
+              <div className="flex flex-col gap-3">
+                <FormField
+                  control={form.control}
+                  name="slipNo"
+                  render={({ field }) => (
+                    <Field label="स्लिप संख्या">
+                      <input
+                        className={inputCls}
+                        placeholder="स्लिप संख्या दर्ज करें"
+                        {...field}
+                      />
+                    </Field>
+                  )}
+                />
+              </div>
+            </SectionCard>
+
             {/* ── Farmer Info ── */}
             <SectionCard title="किसान की जानकारी">
               <div className="flex flex-col gap-3">

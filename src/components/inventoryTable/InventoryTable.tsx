@@ -60,7 +60,7 @@ export type Inventory = {
   rate: number;
   totalWeight: number;
   totalAmount: number;
-  status: "PENDING" | "CONFIRMED" | "PAYMENT_PENDING" | "PAYMENT_DONE";
+  status: "PENDING" | "PAYMENT_PENDING" | "PAYMENT_DONE";
   createdById: number;
   createdAt: string;
   weights: Weight[];

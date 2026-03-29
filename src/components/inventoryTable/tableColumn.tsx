@@ -31,7 +31,6 @@ function StatusCell({ row }: { row: any }) {
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-yellow-100 text-yellow-800 border-yellow-300",
-    CONFIRMED: "bg-blue-100 text-blue-800 border-blue-300",
     PAYMENT_PENDING: "bg-orange-100 text-orange-800 border-orange-300",
     PAYMENT_DONE: "bg-green-100 text-green-800 border-green-300",
   };
@@ -39,23 +38,18 @@ function StatusCell({ row }: { row: any }) {
   // Determine which statuses the user can change to based on their role
   let allowedStatuses: string[] = [];
   if (user?.role === "SUPERVISOR") {
-    // SUPERVISOR can mark: PENDING -> CONFIRMED only
+    // SUPERVISOR can mark: PENDING -> PAYMENT_PENDING only
     if (status === "PENDING") {
-      allowedStatuses = ["CONFIRMED"];
+      allowedStatuses = ["PAYMENT_PENDING"];
     }
   } else if (user?.role === "FINANCER") {
-    // FINANCER can mark: CONFIRMED -> PAYMENT_PENDING only
-    if (status === "CONFIRMED") {
-      allowedStatuses = ["PAYMENT_PENDING"];
+    // FINANCER can mark: PAYMENT_PENDING -> PAYMENT_DONE only
+    if (status === "PAYMENT_PENDING") {
+      allowedStatuses = ["PAYMENT_DONE"];
     }
   } else if (user?.role === "ADMIN") {
     // ADMIN can do everything
-    allowedStatuses = [
-      "PENDING",
-      "CONFIRMED",
-      "PAYMENT_PENDING",
-      "PAYMENT_DONE",
-    ];
+    allowedStatuses = ["PENDING", "PAYMENT_PENDING", "PAYMENT_DONE"];
   } else {
     // PURCHASER and other roles cannot change status
     allowedStatuses = [];
@@ -158,7 +152,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
   },
 
   {
-    accessorKey: "id",
+    accessorKey: "slipNo",
     header: "क्रमांक",
     size: 90,
   },
@@ -183,7 +177,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
   },
   {
     accessorKey: "location",
-    header: "गांव / पार्टी का नाम",
+    header: "स्थान",
     size: 200,
   },
   {
@@ -231,7 +225,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
 
   {
     accessorKey: "shortageWeight",
-    header: "कटौती के बाद वजन",
+    header: "Shortage Weight",
     size: 140,
     enableSorting: false,
     cell: ({ row }) => {
@@ -255,7 +249,7 @@ export const tableColumns: ColumnDef<Inventory>[] = [
 
   {
     id: "shortageAmount",
-    header: "कटौती के बाद रुपये",
+    header: "Shortage Amount",
     size: 160,
     enableSorting: false,
     cell: ({ row }) => {
