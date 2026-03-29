@@ -36,13 +36,6 @@ function StatusCell({ row }: { row: any }) {
     PAYMENT_DONE: "bg-green-100 text-green-800 border-green-300",
   };
 
-  const allStatuses = [
-    "PENDING",
-    "CONFIRMED",
-    "PAYMENT_PENDING",
-    "PAYMENT_DONE",
-  ];
-
   // Determine which statuses the user can change to based on their role
   let allowedStatuses: string[] = [];
   if (user?.role === "SUPERVISOR") {
