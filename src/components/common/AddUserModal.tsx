@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import config from "@/config";
 
 const createUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -61,7 +62,7 @@ export function AddUserModal({ open, onOpenChange }: AddUserModalProps) {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch("http://localhost:5001/api/users", {
+      const response = await fetch(`${config.apiBaseUrl}/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
