@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { Form, FormField } from "@/components/ui/form";
 import { Trash2, Plus } from "lucide-react";
